@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import cv2
 
 import napari
+import tifffile
+import xml.etree.ElementTree as ET
 
 
 def thresh_mask(idx):
@@ -61,3 +63,36 @@ plt.show()
 
 viewer = napari.view_image(red_stack)
 viewer.add_image(masks)
+
+
+# Load OME-TIFF file
+with tifffile.TiffFile(file_path) as tif:
+    # Extract OME-XML metadata
+    ome_metadata = tif.ome_metadata
+
+    # Parse XML to find timestamps
+    root = ET.fromstring(ome_metadata)
+    # OME-Namespace (needed for proper XML parsing)
+    namespace = {'ome': 'http://www.openmicroscopy.org/Schemas/OME/2016-06'}
+
+
+    Dt = []
+    # Extract timestamps from each frame (if available)
+    for t in root.findall(".//ome:Plane", namespace):
+        if 'DeltaT' in t.attrib:  # Check if timestamp exists
+            Dt.append(float(t.attrib['DeltaT']))  # Time in seconds
+
+
+    acquisition_date = root.find(".//ome:Image/ome:AcquisitionDate", namespace)
+    if acquisition_date is not None:
+        acquisition_time = acquisition_date.text  # Format: 'YYYY-MM-DDTHH:MM:SS'
+        print(f"Acquisition Date: {acquisition_time}")
+    else:
+        print("Acquisition Date not found")
+
+    # # Extract absolute timestamps for each frame
+    # timestamps = []
+    # for plane in root.findall(".//ome:Plane", namespace):
+    #     if 'Timestamp' in plane.attrib:  # Absolute time per frame
+    #         timestamps.append(float(plane.attrib['Timestamp']))  # Might be in UNIX format
+
