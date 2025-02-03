@@ -7,10 +7,11 @@ from skimage.measure import label, regionprops_table, regionprops
 from skimage import io
 import matplotlib.pyplot as plt
 import cv2
-
 import napari
 import tifffile
 import xml.etree.ElementTree as ET
+
+from read_temp import read_temp_csv
 
 
 def thresh_mask(idx):
@@ -37,8 +38,11 @@ def thresh_mask(idx):
     return largest_region_mask
 
 # load the image and segment it
-# file_path = '/Users/annikanichols/Desktop/AN20241111a_83-31_FLP-RG_head_play.ome.tiff'
-file_path = '/Users/annikanichols/Desktop/AN20241111a_83-31_FLP-RG_head.ome.tiff'
+file_path = '/Users/annikanichols/Desktop/AN20241111a_83-31_FLP-RG_head_play.ome.tiff'
+temp_readout_path ='/Users/annikanichols/Desktop/2024-11-11_17-32-27_temperature_data_AN20241111a_83-31_FLP-RG_head_play.csv'
+# file_path = '/Users/annikanichols/Desktop/AN20241111a_83-31_FLP-RG_head.ome.tiff'
+
+temp_data = read_temp_csv(temp_readout_path)
 
 stack = io.imread(file_path)
 red_stack = stack[0, ...]
@@ -60,6 +64,15 @@ plt.plot(green_mean, c='g')
 plt.plot(red_mean, c='r')
 plt.plot(gr_ratio, c='k')
 plt.show()
+
+fig, axes = plt.subplots(4, 1)
+axes[0].plot(green_mean, label="GCaMP")
+axes[1].plot(red_mean, label="RFP", color="r")
+axes[2].plot(gr_ratio, label="Ratio", color="k")
+axes[3].plot(temp_data.Time, temp_data.Temp, label="Temp", color="k")
+
+
+
 
 viewer = napari.view_image(red_stack)
 viewer.add_image(masks)
